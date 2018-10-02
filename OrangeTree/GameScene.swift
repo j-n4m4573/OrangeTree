@@ -15,6 +15,8 @@ class GameScene: SKScene {
     var orange: Orange?
     var touchStart : CGPoint = .zero
     var shapeNode = SKShapeNode()
+    var boundary = SKNode()
+    var numOfLevels : UInt32 = 2
     
     override func didMove(to view: SKView) {
         orangeTree = childNode(withName: "tree") as! SKSpriteNode
@@ -24,6 +26,17 @@ class GameScene: SKScene {
         shapeNode.lineCap = .round
         shapeNode.strokeColor = UIColor(white: 1, alpha: 0.3)
         addChild(shapeNode)
+        physicsWorld.contactDelegate = self
+        
+        boundary.physicsBody = SKPhysicsBody(edgeLoopFrom: CGRect(origin: .zero, size: size))
+        boundary.position = .zero
+        addChild(boundary)
+        
+        let sun = SKSpriteNode(imageNamed: "Sun")
+        sun.name = "sun"
+        sun.position.x = size.width - (sun.size.width * 0.75)
+        sun.position.y = size.height - (sun.size.height * 0.75)
+        addChild(sun)
         }
     
     override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
@@ -40,7 +53,18 @@ class GameScene: SKScene {
             
         // Store the location of the touch
             touchStart = location
-            
+        }
+        
+        for node in nodes(at: location) {
+            if node.name == "sun" {
+                let n = Int(arc4random() % numOfLevels + 1)
+                if let scene = GameScene.load(level: n) {
+                    scene.scaleMode = .aspectFill
+                    if let view = view {
+                        view.presentScene(scene)
+                    }
+                }
+            }
         }
     }
     
@@ -73,6 +97,10 @@ class GameScene: SKScene {
 
         shapeNode.path = nil
     }
+    
+    static func load(level: Int) -> GameScene? {
+        return GameScene (fileNamed: "Level-\(level)")
+    }
 }
 
 extension GameScene : SKPhysicsContactDelegate {
@@ -80,7 +108,7 @@ extension GameScene : SKPhysicsContactDelegate {
     func didBegin(_ contact: SKPhysicsContact) {
         let nodeA = contact.bodyA.node
         let nodeB = contact.bodyB.node
-    
+        
     // Check that the two bodies collided hard enough
         if contact.collisionImpulse > 15 {
             if nodeA?.name == "skull" {
@@ -95,21 +123,6 @@ extension GameScene : SKPhysicsContactDelegate {
     func removeSkull(node: SKNode) {
         node.removeFromParent()
     }
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
-    
 }
 
 
